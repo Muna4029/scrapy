@@ -46,10 +46,12 @@ sys.exit(mitmdump())
             ],
             stdout=PIPE,
         )
-        line = self.proc.stdout.readline().decode("utf-8")
-        host_port = re.search(
+        stdout = self.proc.stdout
+        line = stdout.readline().decode("utf-8") if stdout else ""
+        match = re.search(
             r"listening at (?:https?:\/\/)?([^\s.]+(?:\.\S+)*?:\d+)", line
-        ).group(1)
+        )
+        host_port = match.group(1) if match else None
         return f"http://{self.auth_user}:{self.auth_pass}@{host_port}"
 
     def stop(self):
