@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 class FileInfo(TypedDict):
     url: str
     path: str
-    checksum: str | None
+    checksum: Optional[str]
     status: str
 
 
@@ -70,10 +70,10 @@ class MediaPipeline(ABC):
 
     def __init__(
         self,
-        download_func: Callable[[Request, Spider], Response] | None = None,
-        settings: Settings | dict[str, Any] | None = None,
+        download_func: Optional[Callable[[Request, Spider], Response]] = None,
+        settings: Optional[Union[Settings, Dict[str, Any]]] = None,
         *,
-        crawler: Crawler | None = None,
+        crawler: Optional[Crawler] = None,
     ):
         self.download_func = download_func
 
