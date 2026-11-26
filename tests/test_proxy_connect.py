@@ -86,7 +86,11 @@ class TestProxyConnect:
 
     def teardown_method(self):
         self._proxy.stop()
-        os.environ = self._oldenv
+        # Restore environment without replacing the os.environ object
+        # (os.environ is a special os._Environ instance; assigning a plain
+        # dict to it can break environment-dependent behavior).
+        os.environ.clear()
+        os.environ.update(self._oldenv)
 
     @inlineCallbacks
     def test_https_connect_tunnel(self):

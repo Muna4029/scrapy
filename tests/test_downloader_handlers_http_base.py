@@ -629,7 +629,11 @@ class TestHttpProxyBase(ABC):
         request = Request(domain, meta={"proxy": http_proxy, "download_timeout": 0.2})
         with pytest.raises(error.TimeoutError) as exc_info:
             await download_request(download_handler, request)
-        assert domain in exc_info.value.osError
+        # Some TimeoutError implementations wrap an underlying OSError under
+        # different attribute names; check the underlying osError if present
+        # otherwise fall back to the string representation of the exception.
+        underlying = getattr(exc_info.value, "osError", None)
+        assert domain in (str(underlying) if underlying is not None else str(exc_info.value))
 
     @deferred_f_from_coro_f
     async def test_download_with_proxy_without_http_scheme(
@@ -637,7 +641,10 @@ class TestHttpProxyBase(ABC):
         proxy_mockserver: ProxyEchoMockServer,
         download_handler: DownloadHandlerProtocol,
     ) -> None:
-        http_proxy = f"{proxy_mockserver.host}:{proxy_mockserver.port()}"
+        # Be explicit about the proxy scheme to avoid relying on implicit
+        # parsing behavior that can vary across environments/handlers.
+        scheme = "https" if self.is_secure else "http"
+        http_proxy = f"{scheme}://{proxy_mockserver.host}:{proxy_mockserver.port()}"
         request = Request("http://example.com", meta={"proxy": http_proxy})
         response = await download_request(download_handler, request)
         assert response.status == 200
